@@ -1,0 +1,8 @@
+name: ModManagement
+version: ${project.version}
+main: com.bitanalytic.modmanagement.ModManagement
+api-version: 1.13
+commands:
+  modmenu:
+    usage: /modmenu
+    description: Open Moderation GUI
