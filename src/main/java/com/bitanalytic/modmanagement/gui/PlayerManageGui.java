@@ -1,6 +1,7 @@
 package com.bitanalytic.modmanagement.gui;
 
 import com.bitanalytic.modmanagement.ModManagement;
+import com.bitanalytic.modmanagement.manager.CommandManager;
 import com.bitanalytic.modmanagement.manager.ModCommand;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -34,49 +35,31 @@ public class PlayerManageGui implements Listener {
 	private Player targetPlayer;
 
 	private ModCommand currentCommand;
+	private List<ModCommand> commandList;
 	private List<String> commandArgs = new ArrayList<>();
 
 	private boolean waitingForChat;
 
 	private Map<Integer, ModCommand> commands = new HashMap<>();
 
-	public PlayerManageGui() {
+	public PlayerManageGui(List<ModCommand> commandList) {
 		inv = Bukkit.createInventory(null, 9, "Player Management");
-		commands.put(0, new ModCommand(banCommand, 1));
-		ItemStack banItem = new ItemStack(Material.IRON_AXE, 1);
-		ItemMeta banMeta = banItem.getItemMeta();
-		banMeta.setDisplayName("Ban Player");
-		banItem.setItemMeta(banMeta);
-		inv.setItem(0, banItem);
+		this.commandList = commandList;
+	}
 
-		commands.put(2, new ModCommand(kickCommand, 1));
-		ItemStack kickItem = new ItemStack(Material.IRON_BOOTS, 1);
-		ItemMeta kickMeta = kickItem.getItemMeta();
-		kickMeta.setDisplayName("Kick Player");
-		kickItem.setItemMeta(kickMeta);
-		inv.setItem(2, kickItem);
-
-		commands.put(4, new ModCommand(whisperCommand, 1));
-		ItemStack whisperItem = new ItemStack(Material.GHAST_TEAR, 1);
-		ItemMeta whisperMeta = whisperItem.getItemMeta();
-		whisperMeta.setDisplayName("Whisper to Player");
-		whisperItem.setItemMeta(whisperMeta);
-		inv.setItem(4, whisperItem);
-
-		commands.put(6, new ModCommand(tpCommand, 0));
-		ItemStack tpItem = new ItemStack(Material.ENDER_PEARL, 1);
-		tpItem.getItemMeta().setDisplayName("Teleport to Player");
-		inv.setItem(6, tpItem);
-
-		commands.put(8, new ModCommand(opCommand, 0));
-		ItemStack opItem = new ItemStack(Material.NETHER_STAR, 1);
-		ItemMeta opMeta = opItem.getItemMeta();
-		opMeta.setDisplayName("OP Player");
-		opItem.setItemMeta(opMeta);
-		inv.setItem(8, opItem);
+	private void createInventory(Player player) {
+		int index = 0;
+		for (ModCommand command : commandList) {
+			if (command.doesPlayerHavePermission(player)) {
+				commands.put(index, command);
+				inv.setItem(index, command.getItemStack());
+				index++;
+			}
+		}
 	}
 
 	public void openInventory(Player player, Player targetPlayer) {
+		createInventory(player);
 		player.openInventory(inv);
 		this.staff = player;
 		this.targetPlayer = targetPlayer;
@@ -94,11 +77,13 @@ public class PlayerManageGui implements Listener {
 
 	@EventHandler
 	public void onInventoryClick(InventoryClickEvent event) {
-		if (event.getInventory() != inv || event.getWhoClicked() != staff) {
-			return;
+		if (event.getWhoClicked() == staff) {
+			event.setCancelled(true);
 		}
 
-		event.setCancelled(true);
+		if (event.getClickedInventory() != inv || event.getWhoClicked() != staff) {
+			return;
+		}
 
 
 		ModCommand command = commands.get(event.getSlot());
@@ -109,13 +94,14 @@ public class PlayerManageGui implements Listener {
 		currentCommand = command;
 
 		if (currentCommand.getArgCount() == 0) {
+			staff.closeInventory();
 			currentCommand.execute(staff, targetPlayer, commandArgs);
 			return;
 		}
 
 		waitingForChat = true;
-		staff.sendMessage("Please input a reason: ");
 		staff.closeInventory();
+		staff.sendMessage("Please input a reason: ");
 	}
 
 	@EventHandler

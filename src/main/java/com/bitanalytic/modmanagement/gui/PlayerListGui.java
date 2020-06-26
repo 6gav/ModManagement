@@ -1,15 +1,12 @@
 package com.bitanalytic.modmanagement.gui;
 
 import com.bitanalytic.modmanagement.ModManagement;
+import com.bitanalytic.modmanagement.manager.CommandManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.OfflinePlayer;
-import org.bukkit.Server;
-import org.bukkit.block.Skull;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -75,11 +72,12 @@ public class PlayerListGui implements Listener {
 
 	@EventHandler
 	public void onInventoryClick(InventoryClickEvent event) {
-		if (event.getInventory() != inv) {
+		if(event.getInventory() == inv) {
+			event.setCancelled(true);
+		}
+		if (event.getClickedInventory() != inv) {
 			return;
 		}
-
-		event.setCancelled(true);
 
 		final ItemStack head = event.getCurrentItem();
 		Player player = (Player) event.getWhoClicked();
@@ -90,9 +88,7 @@ public class PlayerListGui implements Listener {
 
 		SkullMeta skullMeta = (SkullMeta) head.getItemMeta();
 
-		player.sendMessage(skullMeta.getOwningPlayer().getName());
-
-		PlayerManageGui playerManageGui = new PlayerManageGui();
+		PlayerManageGui playerManageGui = new PlayerManageGui(CommandManager.commands);
 		ModManagement.SERVER.getPluginManager().registerEvents(playerManageGui, ModManagement.PLUGIN);
 		playerManageGui.openInventory(player, (Player) skullMeta.getOwningPlayer());
 

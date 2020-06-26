@@ -6,3 +6,13 @@ commands:
   modmenu:
     usage: /modmenu
     description: Open Moderation GUI
+    permission: modmanagement.menu
+    permission-message: §3You cannot open Mod Management Menu
+permissions:
+  modmanagement.*:
+    description: Allows all permissions for this plugin
+    children:
+      modmanagement.menu: true
+  modmanagement.menu:
+    description: Allow opening of Mod Management Menu
+    default: op
